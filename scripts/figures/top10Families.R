@@ -5,7 +5,7 @@ library(dbplyr)
 library(RSQLite)
 
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
 
 
@@ -15,7 +15,6 @@ myConn <- dbConnect(drv = SQLite(), dbname= "taxo.db")
 dbListTables(myConn)
 fams <- dbReadTable(myConn, "taxo") %>% 
   collect()
-
 
 fams_sum <- fams %>% 
   group_by(Family) %>% 
