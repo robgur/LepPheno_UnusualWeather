@@ -6,8 +6,9 @@ library(sjPlot)
 library(MuMIn)
 
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
+
 
 mdf <- mdf %>% 
   mutate(annualTemp = scale(annualTemp),
@@ -57,14 +58,13 @@ onset_top <- lmer(q5 ~ annualTemp + tempSeas + annualPrec + precSeas +
                     voltinism + overwinteringStage + diurnality + 
                     (1 | validName) + (1 | id_cells) + 
                     annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
                     annualTemp:diurnality + 
+                    year:voltinism + 
                     year:overwinteringStage +
                     year:diurnality +
                     annualTemp:annualPrec +
-                    annualTemp:year +
-                    tempSeas:year +
-                    annualPrec:year +
-                    precSeas:year,
+                    annualPrec:year,
                   data = mdf,
                   REML = FALSE, 
                   lmerControl(optimizer = "bobyqa"),
@@ -74,37 +74,54 @@ vif(onset_top) # vif too high on year effect, removing,
 # diurnality:year
 
 onset_top <- lmer(q5 ~ annualTemp + tempSeas + annualPrec + precSeas +
-                     dstdoy +
+                    year + dstdoy +
                     voltinism + overwinteringStage + diurnality + 
                     (1 | validName) + (1 | id_cells) + 
                     annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
                     annualTemp:diurnality + 
+                    year:voltinism + 
                     year:overwinteringStage +
                     annualTemp:annualPrec +
-                    annualTemp:year +
-                    tempSeas:year +
-                    annualPrec:year +
-                    precSeas:year,
+                    annualPrec:year,
                   data = mdf,
                   REML = FALSE, 
                   lmerControl(optimizer = "bobyqa"),
                   weights = on_w)
+
 car::vif(onset_top) ## still too high for annualTemp:diurnality
+
+onset_top <- lmer(q5 ~ annualTemp + tempSeas + annualPrec + precSeas +
+                    year + dstdoy +
+                    voltinism + overwinteringStage + diurnality + 
+                    (1 | validName) + (1 | id_cells) + 
+                    annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
+                    year:voltinism + 
+                    year:overwinteringStage +
+                    annualTemp:annualPrec +
+                    annualPrec:year,
+                  data = mdf,
+                  REML = FALSE, 
+                  lmerControl(optimizer = "bobyqa"),
+                  weights = on_w)
+
+## vifs still too high -- remove year
 onset_top <- lmer(q5 ~ annualTemp + tempSeas + annualPrec + precSeas +
                     dstdoy +
                     voltinism + overwinteringStage + diurnality + 
                     (1 | validName) + (1 | id_cells) + 
                     annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
+                    year:voltinism + 
                     year:overwinteringStage +
                     annualTemp:annualPrec +
-                    annualTemp:year +
-                    tempSeas:year +
-                    annualPrec:year +
-                    precSeas:year,
+                    annualPrec:year,
                   data = mdf,
                   REML = FALSE, 
                   lmerControl(optimizer = "bobyqa"),
                   weights = on_w)
+
 
 vif(onset_top)
 
@@ -177,7 +194,7 @@ onset_s <- step(onset_clim)
 onset_s
 
 # now add in more traits
-model_climFirst <- lmer(q5 ~ annualTemp + annualPrec + 
+model_climFirst <- lmer(q5 ~ annualTemp + annualPrec + precSeas +
                           dstdoy + 
                           annualTemp:annualPrec + 
                           year +
@@ -199,7 +216,7 @@ model_climFirst <- lmer(q5 ~ annualTemp + annualPrec +
 model_climFirst_s <- step(model_climFirst)
 model_climFirst_s
 
-top_model_climFirst <- lmer(q5 ~ annualTemp + annualPrec + 
+top_model_climFirst <- lmer(q5 ~ annualTemp + annualPrec + precSeas +
                               dstdoy + 
                               year +
                               overwinteringStage + 
@@ -214,7 +231,7 @@ top_model_climFirst <- lmer(q5 ~ annualTemp + annualPrec +
 
 car::vif(top_model_climFirst) # remove year
 
-top_model_climFirst <- lmer(q5 ~ annualTemp + annualPrec + 
+top_model_climFirst <- lmer(q5 ~ annualTemp + annualPrec + precSeas +
                               dstdoy + 
                               overwinteringStage + 
                               annualTemp:annualPrec + 
@@ -230,16 +247,17 @@ car::vif(top_model_climFirst)
 
 AICc(top_model_climFirst, onset_top_noW, onset_top)
 Weights(AICc(top_model_climFirst, onset_top_noW, onset_top))
+## climfirst and noweights models are the same
 
 ## top onset model 
 summary(onset_top_noW)
 
 plot_model(onset_top_noW, type = "pred", terms = c("annualTemp", "overwinteringStage"))
-plot_model(onset_top_noW, type = "pred", terms = c("year", "overwinteringStage"), ci.lvl = NA)
+plot_model(onset_top_noW, type = "pred", terms = c("year", "overwinteringStage"))
 plot_model(onset_top_noW, type = "pred", terms = c("annualTemp", "annualPrec"))
-plot_model(onset_top_noW, type = "pred", terms = c("year", "annualPrec"),ci.lvl = NA)
+plot_model(onset_top_noW, type = "pred", terms = c("year", "annualPrec"))
 
-tab_model(onset_top_noW, file = "tables/onset_LMM.doc")
+tab_model(onset_top_noW, file = "tables/onset_LMM_revision.doc")
 
 ## phylogenetic model time
 library(phyr)
@@ -265,6 +283,13 @@ mdf_phylo <- mdf_phylo %>%
   filter(validName != "Polites sonora") %>% 
   filter(validName != "Nadata gibossa")
 
+# drop species from phylogeny that aren't in analysis
+tree_sp <- tt$tip.label
+sppNotInAnalysis <- data.frame(Species = tree_sp) %>% 
+  filter(!Species %in% mdf_phylo$unique_name)
+
+tt <- ape::drop.tip(tt, tip = sppNotInAnalysis$Species)
+
 pglmm_onset <- pglmm(formula = q5 ~ annualTemp + annualPrec + precSeas +
                        dstdoy +
                        overwinteringStage + 
@@ -273,18 +298,17 @@ pglmm_onset <- pglmm(formula = q5 ~ annualTemp + annualPrec + precSeas +
                        annualTemp:annualPrec + 
                        annualPrec:year +
                        (1|unique_name__) + (1|id_cells),
-              data = mdf_phylo, 
-              cov_ranef = list(unique_name = tt), 
-              bayes = TRUE)
+                     data = mdf_phylo, 
+                     cov_ranef = list(unique_name = tt), 
+                     bayes = TRUE)
 
-summary(onset_top_noW)
 summary(pglmm_onset)
 
 im <- pglmm_onset$inla.model
 im_fix <- im$summary.fixed %>% 
   tibble::rownames_to_column("Effects") %>% 
   dplyr::select(Effects, mean, `0.025quant`, `0.975quant`)
-tab_df(im_fix, title = "PGLMM Onset", file = "tables/onset_PGLMM.doc")
+tab_df(im_fix, title = "PGLMM Onset", file = "tables/onset_PGLMM_revision.doc")
 
 ## Model Assumption Checks
 # residuals
@@ -307,7 +331,7 @@ v1 <- variog(gdf, trend = "1st")
 plot(v1)
 
 ## Goodness of fit
-rr2::R2(pglmm_onset) #0.746
+rr2::R2(pglmm_onset) #0.794
 
 ## Examine spatial autocorrelation a second way
 library(ncf)
@@ -339,4 +363,4 @@ onset_correlogram_plot <- ggplot() +
 onset_correlogram_plot # no autocorrelation found at closest spatial lag, so spatial model not made
 
 # save plot as Rdata to make multipanel Moran's I plot for SI
-save(onset_correlogram_plot, file = "figures/onset_correlogram_plot.Rdata")
+save(onset_correlogram_plot, file = "figures/onset_correlogram_plot_revision.Rdata")

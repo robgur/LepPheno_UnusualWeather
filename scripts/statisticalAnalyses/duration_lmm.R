@@ -6,7 +6,7 @@ library(sjPlot)
 library(MuMIn)
 
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
 
 mdf <- mdf %>% 
@@ -54,14 +54,11 @@ dur_m <- lmer(dur ~ annualTemp + tempSeas + annualPrec + precSeas + year +
 dur_m_s <- step(dur_m)
 dur_m_s
 
-top_dur <- lmer(dur ~ annualTemp + annualPrec + year +
+top_dur <- lmer(dur ~ annualTemp + annualPrec + precSeas +
                   dstdoy +
                   voltinism + overwinteringStage + diurnality + Seas +
                   annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
                   annualTemp:Seas +
-                  year:diurnality + 
-                  year:Seas +
                   annualTemp:annualPrec +
                   (1|validName) + (1|id_cells),
                 data = mdf,
@@ -69,126 +66,42 @@ top_dur <- lmer(dur ~ annualTemp + annualPrec + year +
                 lmerControl(optimizer = "bobyqa"),
                 weights = dur_w)
 
-car::vif(top_dur) # remove year
+car::vif(top_dur) 
 
-top_dur <- lmer(dur ~ annualTemp + annualPrec + 
-                  dstdoy +
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  annualTemp:Seas +
-                  year:diurnality + 
-                  year:Seas +
-                  annualTemp:annualPrec +
-                  (1|validName) + (1|id_cells),
-                data = mdf,
-                REML = FALSE, 
-                lmerControl(optimizer = "bobyqa"),
-                weights = dur_w)
-
-car::vif(top_dur) ## still too high remove annualTemp:Seas
-
-top_dur <- lmer(dur ~ annualTemp + annualPrec + 
-                  dstdoy +
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  year:diurnality + 
-                  year:Seas +
-                  annualTemp:annualPrec +
-                  (1|validName) + (1|id_cells),
-                data = mdf,
-                REML = FALSE, 
-                lmerControl(optimizer = "bobyqa"),
-                weights = dur_w)
-
-car::vif(top_dur) ## still too high remove annualTemp:Seas
-#stable top model?
 top_dur_s <- step(top_dur)
 top_dur_s ## nope new top model
-
-top_dur <- lmer(dur ~ annualTemp + annualPrec + 
-                  dstdoy +
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  year:Seas +
-                  annualTemp:annualPrec +
-                  (1|validName) + (1|id_cells),
-                data = mdf,
-                REML = FALSE, 
-                lmerControl(optimizer = "bobyqa"),
-                weights = dur_w)
-
-vif(top_dur)
-# now stable?
-top_dur_s2 <- step(top_dur)
-top_dur_s2 # yep good
+# yep good
 
 ## no weights models
 dur_m_noW <- lmer(dur ~ annualTemp + tempSeas + annualPrec + precSeas + year +
-                dstdoy + ndstcol + 
-                voltinism + overwinteringStage + diurnality + Seas +
-                annualTemp:voltinism +
-                annualTemp:overwinteringStage +
-                annualTemp:diurnality+
-               annualTemp:Seas +
-                year:voltinism +
-                year:overwinteringStage +
-                year:diurnality +
-                year:Seas +
-                annualTemp:annualPrec + 
-                annualTemp:year + 
-                tempSeas:year +
-                annualPrec:year +
-                precSeas:year +
-                (1|validName) + (1|id_cells),
-              data = mdf,
-              REML = FALSE, 
-              lmerControl(optimizer = "bobyqa"))
+                    dstdoy + ndstcol + 
+                    voltinism + overwinteringStage + diurnality + Seas +
+                    annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
+                    annualTemp:diurnality+
+                    annualTemp:Seas +
+                    year:voltinism +
+                    year:overwinteringStage +
+                    year:diurnality +
+                    year:Seas +
+                    annualTemp:annualPrec + 
+                    annualTemp:year + 
+                    tempSeas:year +
+                    annualPrec:year +
+                    precSeas:year +
+                    (1|validName) + (1|id_cells),
+                  data = mdf,
+                  REML = FALSE, 
+                  lmerControl(optimizer = "bobyqa"))
 
 dur_s_noW <- step(dur_m_noW)
 dur_s_noW
 
-dur_top_noW <- lmer(dur ~ annualTemp + annualPrec + year +
+dur_top_noW <- lmer(dur ~ annualTemp + annualPrec + precSeas +
                       dstdoy +
                       voltinism + overwinteringStage + diurnality + Seas +
                       annualTemp:voltinism +
-                      annualTemp:overwinteringStage +
                       annualTemp:Seas + 
-                      year:diurnality +
-                      year:Seas +
-                      annualTemp:annualPrec +
-                      (1|validName) + (1|id_cells),
-                    data = mdf,
-                    REML = FALSE, 
-                    lmerControl(optimizer = "bobyqa"))
-
-car::vif(dur_top_noW) # remove year
-
-dur_top_noW <- lmer(dur ~ annualTemp + annualPrec +
-                      dstdoy +
-                      voltinism + overwinteringStage + diurnality + Seas +
-                      annualTemp:voltinism +
-                      annualTemp:overwinteringStage +
-                      annualTemp:Seas + 
-                      year:diurnality +
-                      year:Seas +
-                      annualTemp:annualPrec +
-                      (1|validName) + (1|id_cells),
-                    data = mdf,
-                    REML = FALSE, 
-                    lmerControl(optimizer = "bobyqa"))
-
-car::vif(dur_top_noW) # remove annualTemp:Seas
-
-dur_top_noW <- lmer(dur ~ annualTemp + annualPrec +
-                      dstdoy +
-                      voltinism + overwinteringStage + diurnality + Seas +
-                      annualTemp:voltinism +
-                      annualTemp:overwinteringStage +
-                      year:diurnality +
-                      year:Seas +
                       annualTemp:annualPrec +
                       (1|validName) + (1|id_cells),
                     data = mdf,
@@ -196,26 +109,12 @@ dur_top_noW <- lmer(dur ~ annualTemp + annualPrec +
                     lmerControl(optimizer = "bobyqa"))
 
 car::vif(dur_top_noW)
+
 # stable top model?
 dur_top_noW_s <- step(dur_top_noW)
-dur_top_noW_s # nope, new top model
-
-dur_top_noW <- lmer(dur ~ annualTemp + annualPrec +
-                      dstdoy +
-                      voltinism + overwinteringStage + diurnality + Seas +
-                      annualTemp:voltinism +
-                      annualTemp:overwinteringStage +
-                      year:Seas +
-                      annualTemp:annualPrec +
-                      (1|validName) + (1|id_cells),
-                    data = mdf,
-                    REML = FALSE, 
-                    lmerControl(optimizer = "bobyqa"))
+dur_top_noW_s # yes, looks good
 
 vif(dur_top_noW)
-# now stable?
-dur_top_noW_s2 <- step(dur_top_noW)
-dur_top_noW_s2
 
 # Clim first models now
 ## climate first model
@@ -232,39 +131,37 @@ dur_clim_s
 
 ## add in traits now
 dur_clim_traits <- lmer(dur ~ annualTemp + annualPrec + 
-                   dstdoy +
-                     voltinism + overwinteringStage + diurnality + Seas +
-                     annualTemp:voltinism +
-                     annualTemp:overwinteringStage +
-                     annualTemp:diurnality+
-                     annualTemp:Seas +
-                     year:voltinism +
-                     year:overwinteringStage +
-                     year:diurnality +
-                     year:Seas +
-                     annualTemp:annualPrec + 
-                     annualTemp:year + 
-                     annualPrec:year +
-                   (1|validName) + (1|id_cells),
-                 data = mdf,
-                 REML = FALSE, 
-                 lmerControl(optimizer = "bobyqa"))
+                          dstdoy +
+                          voltinism + overwinteringStage + diurnality + Seas +
+                          annualTemp:voltinism +
+                          annualTemp:overwinteringStage +
+                          annualTemp:diurnality+
+                          annualTemp:Seas +
+                          year:voltinism +
+                          year:overwinteringStage +
+                          year:diurnality +
+                          year:Seas +
+                          annualTemp:annualPrec + 
+                          annualTemp:year + 
+                          annualPrec:year +
+                          (1|validName) + (1|id_cells),
+                        data = mdf,
+                        REML = FALSE, 
+                        lmerControl(optimizer = "bobyqa"))
 
 dur_clim_traits_s <- step(dur_clim_traits)
 dur_clim_traits_s
 
 dur_clim_top <- lmer(dur ~ annualTemp + annualPrec +
-                          dstdoy +
-                          voltinism + overwinteringStage + diurnality + Seas +
-                          annualTemp:voltinism +
-                          annualTemp:overwinteringStage +
-                          annualTemp:Seas +
-                          Seas:year +
-                          annualTemp:annualPrec +
-                          (1|validName) + (1|id_cells),
-                        data = mdf,
-                        REML = FALSE, 
-                        lmerControl(optimizer = "bobyqa"))
+                       dstdoy +
+                       voltinism + overwinteringStage + diurnality + Seas +
+                       annualTemp:voltinism +
+                       annualTemp:Seas +
+                       annualTemp:annualPrec +
+                       (1|validName) + (1|id_cells),
+                     data = mdf,
+                     REML = FALSE, 
+                     lmerControl(optimizer = "bobyqa"))
 
 vif(dur_clim_top)
 #stable top model?
@@ -274,15 +171,16 @@ dur_clim_top_s # yep, good
 AICc(dur_clim_top, dur_top_noW, top_dur) 
 Weights(AICc(dur_clim_top, dur_top_noW, top_dur))
 
-summary(dur_clim_top)
+## dur_top_noW & top_dur are the same model
 
-plot_model(dur_clim_top, type = "pred", terms = c("annualTemp", "voltinism"))
-plot_model(dur_clim_top, type = "pred", terms = c("annualTemp", "overwinteringStage"))
-plot_model(dur_clim_top, type = "pred", terms = c("annualTemp", "Seas"))
-plot_model(dur_clim_top, type = "pred", terms = c("year", "Seas"), ci.lvl = NA)
-plot_model(dur_clim_top, type = "pred", terms = c("annualTemp", "annualPrec"))
+summary(dur_top_noW)
 
-tab_model(dur_clim_top, file = "tables/duration_LMM.doc")
+plot_model(dur_top_noW, type = "pred", terms = c("annualTemp", "voltinism"))
+plot_model(dur_top_noW, type = "pred", terms = c("annualTemp", "overwinteringStage"))
+plot_model(dur_top_noW, type = "pred", terms = c("annualTemp", "Seas"))
+plot_model(dur_top_noW, type = "pred", terms = c("annualTemp", "annualPrec"))
+
+tab_model(dur_top_noW, file = "tables/duration_LMM_revision.doc")
 
 # phylogenetic model time
 library(phyr)
@@ -308,27 +206,32 @@ mdf_phylo <- mdf_phylo %>%
   filter(validName != "Polites sonora") %>% 
   filter(validName != "Nadata gibossa")
 
-pglmm_dur <- pglmm(formula = dur ~ annualTemp + annualPrec +
-                                   dstdoy +
-                                   voltinism + overwinteringStage + diurnality + Seas +
-                                   annualTemp:voltinism +
-                                   annualTemp:overwinteringStage +
-                                   annualTemp:Seas +
-                                   Seas:year +
-                                   annualTemp:annualPrec +
-                                   (1|unique_name__) + (1|id_cells),
-                      data = mdf_phylo, 
-                      cov_ranef = list(unique_name = tt), 
-                      bayes = TRUE)
+# drop species from phylogeny that aren't in analysis
+tree_sp <- tt$tip.label
+sppNotInAnalysis <- data.frame(Species = tree_sp) %>% 
+  filter(!Species %in% mdf_phylo$unique_name)
+
+tt <- ape::drop.tip(tt, tip = sppNotInAnalysis$Species)
+
+pglmm_dur <- pglmm(formula = dur ~ annualTemp + annualPrec + precSeas +
+                     dstdoy +
+                     voltinism + overwinteringStage + diurnality + Seas +
+                     annualTemp:voltinism +
+                     annualTemp:Seas + 
+                     annualTemp:annualPrec +
+                     (1|unique_name__) + (1|id_cells),
+                   data = mdf_phylo, 
+                   cov_ranef = list(unique_name = tt), 
+                   bayes = TRUE)
 
 summary(pglmm_dur)
 
-rr2::R2(pglmm_dur) #0.72
+rr2::R2(pglmm_dur) #0.6987
 im <- pglmm_dur$inla.model
 im_fix <- im$summary.fixed %>% 
   tibble::rownames_to_column("Effects") %>% 
   dplyr::select(Effects, mean, `0.025quant`, `0.975quant`)
-tab_df(im_fix, title = "PGLMM Duration", file = "tables/duration_PGLMM.doc")
+tab_df(im_fix, title = "PGLMM Duration", file = "tables/duration_PGLMM_revision.doc")
 
 ## Model Assumption Checks
 # residuals
@@ -351,7 +254,7 @@ v1 <- variog(gdf, trend = "1st")
 plot(v1)
 
 ## Goodness of fit
-rr2::R2(pglmm_dur) #0.717
+rr2::R2(pglmm_dur) #0.6987
 
 ## Examine spatial autocorrelation a second way
 library(ncf)
@@ -383,4 +286,5 @@ dur_correlogram_plot <- ggplot() +
 dur_correlogram_plot # no autocorrelation found at closest spatial lag, so spatial model not made
 
 # save plot as Rdata to make multipanel Moran's I plot for SI
-save(dur_correlogram_plot, file = "figures/dur_correlogram_plot.Rdata")
+save(dur_correlogram_plot, file = "figures/dur_correlogram_plot_revision.Rdata")
+

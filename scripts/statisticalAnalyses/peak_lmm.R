@@ -6,7 +6,7 @@ library(sjPlot)
 library(MuMIn)
 
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
 
 mdf <- mdf %>% 
@@ -30,38 +30,38 @@ mdf <- mdf %>%
 
 ### Peak modeling
 peak_m <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
-                  dstdoy + ndstcol + 
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  annualTemp:diurnality+
-                  annualTemp:Seas +
-                  year:voltinism +
-                  year:overwinteringStage +
-                  year:diurnality +
-                  year:Seas +
-                  annualTemp:annualPrec + 
-                  annualTemp:year + 
-                  tempSeas:year +
-                  annualPrec:year +
-                  precSeas:year +
-                  (1|validName) + (1|id_cells),
-                data = mdf,
-                REML = FALSE, 
-                lmerControl(optimizer = "bobyqa"),
-                weights = peak_w)
+                 dstdoy + ndstcol + 
+                 voltinism + overwinteringStage + diurnality + Seas +
+                 annualTemp:voltinism +
+                 annualTemp:overwinteringStage +
+                 annualTemp:diurnality+
+                 annualTemp:Seas +
+                 year:voltinism +
+                 year:overwinteringStage +
+                 year:diurnality +
+                 year:Seas +
+                 annualTemp:annualPrec + 
+                 annualTemp:year + 
+                 tempSeas:year +
+                 annualPrec:year +
+                 precSeas:year +
+                 (1|validName) + (1|id_cells),
+               data = mdf,
+               REML = FALSE, 
+               lmerControl(optimizer = "bobyqa"),
+               weights = peak_w)
 
 peak_s <- step(peak_m)
 peak_s
 
 top_peak_m <- lmer(q50 ~ annualTemp + annualPrec +  year +
                      dstdoy + 
-                     voltinism + overwinteringStage + Seas + 
+                     voltinism + overwinteringStage + diurnality + Seas + 
                      annualTemp:overwinteringStage +
                      annualTemp:Seas +
                      year:overwinteringStage +
+                     year:Seas +
                      annualPrec:year +
-                     precSeas:year +
                      (1|validName) + (1|id_cells),
                    data = mdf,
                    REML = FALSE, 
@@ -70,14 +70,14 @@ top_peak_m <- lmer(q50 ~ annualTemp + annualPrec +  year +
 
 car::vif(top_peak_m) # remove year
 
-top_peak_m <- lmer(q50 ~ annualTemp + annualPrec +
+top_peak_m <- lmer(q50 ~ annualTemp + annualPrec +  
                      dstdoy + 
-                     voltinism + overwinteringStage + Seas + 
+                     voltinism + overwinteringStage + diurnality + Seas + 
                      annualTemp:overwinteringStage +
                      annualTemp:Seas +
                      year:overwinteringStage +
+                     year:Seas +
                      annualPrec:year +
-                     precSeas:year +
                      (1|validName) + (1|id_cells),
                    data = mdf,
                    REML = FALSE, 
@@ -92,36 +92,34 @@ top_peak_m_s
 
 ### next we will make the no weight models
 peak_m_noW <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
-                 dstdoy + ndstcol + 
-                 voltinism + overwinteringStage + diurnality + Seas +
-                 annualTemp:voltinism +
-                 annualTemp:overwinteringStage +
-                 annualTemp:diurnality+
-                 annualTemp:Seas +
-                 year:voltinism +
-                 year:overwinteringStage +
-                 year:diurnality +
-                 annualTemp:annualPrec + 
-                 annualTemp:year + 
-                 tempSeas:year +
-                 annualPrec:year +
-                 precSeas:year +
-                 (1|validName) + (1|id_cells),
-               data = mdf,
-               REML = FALSE, 
-               lmerControl(optimizer = "bobyqa"))
+                     dstdoy + ndstcol + 
+                     voltinism + overwinteringStage + diurnality + Seas +
+                     annualTemp:voltinism +
+                     annualTemp:overwinteringStage +
+                     annualTemp:diurnality+
+                     annualTemp:Seas +
+                     year:voltinism +
+                     year:overwinteringStage +
+                     year:diurnality +
+                     annualTemp:annualPrec + 
+                     annualTemp:year + 
+                     tempSeas:year +
+                     annualPrec:year +
+                     precSeas:year +
+                     (1|validName) + (1|id_cells),
+                   data = mdf,
+                   REML = FALSE, 
+                   lmerControl(optimizer = "bobyqa"))
 
 peak_s <- step(peak_m_noW)
 peak_s
 
-top_peak_noW <- lmer(q50 ~ annualTemp + annualPrec + year +
-                       voltinism + overwinteringStage + Seas +
+top_peak_noW <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
+                       voltinism + overwinteringStage + diurnality + Seas +
                        annualTemp:overwinteringStage +
                        annualTemp:Seas +
                        year:overwinteringStage +
-                       annualTemp:annualPrec +
-                       annualPrec:year +
-                       precSeas:year +
+                       tempSeas:year +
                        (1|validName) + (1|id_cells),
                      data = mdf,
                      REML = FALSE, 
@@ -129,14 +127,12 @@ top_peak_noW <- lmer(q50 ~ annualTemp + annualPrec + year +
 
 car::vif(top_peak_noW) # no year
 
-top_peak_noW <- lmer(q50 ~ annualTemp + annualPrec + 
-                       voltinism + overwinteringStage + Seas +
+top_peak_noW <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + precSeas + 
+                       voltinism + overwinteringStage + diurnality + Seas +
                        annualTemp:overwinteringStage +
                        annualTemp:Seas +
                        year:overwinteringStage +
-                       annualTemp:annualPrec +
-                       annualPrec:year +
-                       precSeas:year +
+                       tempSeas:year +
                        (1|validName) + (1|id_cells),
                      data = mdf,
                      REML = FALSE, 
@@ -146,22 +142,39 @@ car::vif(top_peak_noW)
 
 ## check if top model is stable
 top_peak_noW_s <- step(top_peak_noW)
-top_peak_noW_s #yep all good
+top_peak_noW_s #nope, so choosing more simple model
+
+top_peak_noW <- lmer(q50 ~ annualTemp + tempSeas + annualPrec +
+                       voltinism + overwinteringStage + diurnality + Seas +
+                       annualTemp:overwinteringStage +
+                       annualTemp:Seas +
+                       tempSeas:year +
+                       (1|validName) + (1|id_cells),
+                     data = mdf,
+                     REML = FALSE, 
+                     lmerControl(optimizer = "bobyqa"))
+
+car::vif(top_peak_noW)
+
+## check if top model is stable now
+top_peak_noW_s <- step(top_peak_noW)
+top_peak_noW_s
+
 
 ### finally the climate only modeling approach
 peak_clim <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + precSeas + 
-                     dstdoy + ndstcol + 
-                     annualTemp:annualPrec + 
-                     (1|validName) + (1|id_cells),
-                   data = mdf,
-                   REML = FALSE, 
-                   lmerControl(optimizer = "bobyqa"))
+                    dstdoy + ndstcol + 
+                    annualTemp:annualPrec + 
+                    (1|validName) + (1|id_cells),
+                  data = mdf,
+                  REML = FALSE, 
+                  lmerControl(optimizer = "bobyqa"))
 
 peak_clim_s <- step(peak_clim)
 peak_clim_s
 
 ## now add the traits and year variables
-peak_clim_traits <- lmer(q50 ~ annualTemp + annualPrec + 
+peak_clim_traits <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + 
                            annualTemp:annualPrec + 
                            voltinism + overwinteringStage + diurnality + Seas +
                            annualTemp:voltinism +
@@ -181,12 +194,10 @@ peak_clim_traits <- lmer(q50 ~ annualTemp + annualPrec +
 peak_clim_traits_s <- step(peak_clim_traits)
 peak_clim_traits_s
 
-top_clim_traits_m <- lmer(q50 ~ annualTemp + annualPrec + 
-                            voltinism + overwinteringStage + Seas +
-                            annualTemp:annualPrec + 
+top_clim_traits_m <- lmer(q50 ~ annualTemp + tempSeas + annualPrec + 
+                            voltinism + overwinteringStage + diurnality + Seas +
                             annualTemp:overwinteringStage +
                             annualTemp:Seas +
-                            overwinteringStage:year +
                             (1|validName) + (1|id_cells),
                           data = mdf,
                           REML = FALSE, 
@@ -198,19 +209,15 @@ car::vif(top_clim_traits_m)
 AICc(top_clim_traits_m, top_peak_noW, top_peak_m)
 Weights(AICc(top_clim_traits_m, top_peak_noW, top_peak_m))
 
-## top peak model 
+## top peak model -- top_peak_noW
 r.squaredGLMM(top_peak_noW)
 summary(top_peak_noW)
 
 plot_model(top_peak_noW, type = "pred", terms = c("annualTemp", "overwinteringStage"))
 plot_model(top_peak_noW, type = "pred", terms = c("annualTemp", "Seas"))
-plot_model(top_peak_noW, type = "pred", terms = c("year", "overwinteringStage"), ci.lvl = NA)
-plot_model(top_peak_noW, type = "pred", terms = c("annualTemp", "annualPrec"))
-plot_model(top_peak_noW, type = "pred", terms = c("year", "precSeas"), ci.lvl = NA)
-plot_model(top_peak_noW, type = "pred", terms = c("year", "annualPrec"), ci.lvl = NA)
 
 
-tab_model(top_peak_noW, file = "tables/middle_LMM.doc")
+tab_model(top_peak_noW, file = "tables/middle_LMM_revision.doc")
 
 # phylogenetic model time
 library(phyr)
@@ -236,26 +243,30 @@ mdf_phylo <- mdf_phylo %>%
   filter(validName != "Polites sonora") %>% 
   filter(validName != "Nadata gibossa")
 
-pglmm_peak <- pglmm(formula = q50 ~ annualTemp + annualPrec + 
-                       voltinism + overwinteringStage + Seas +
-                       annualTemp:overwinteringStage +
-                       annualTemp:Seas +
-                       year:overwinteringStage +
-                       annualTemp:annualPrec +
-                       annualPrec:year +
-                       precSeas:year +
-                       (1|unique_name__) + (1|id_cells),
-                     data = mdf_phylo, 
-                     cov_ranef = list(unique_name = tt), 
-                     bayes = TRUE)
+# drop species from phylogeny that aren't in analysis
+tree_sp <- tt$tip.label
+sppNotInAnalysis <- data.frame(Species = tree_sp) %>% 
+  filter(!Species %in% mdf_phylo$unique_name)
+
+tt <- ape::drop.tip(tt, tip = sppNotInAnalysis$Species)
+
+pglmm_peak <- pglmm(formula = q50 ~ annualTemp + tempSeas + annualPrec +
+                      voltinism + overwinteringStage + diurnality + Seas +
+                      annualTemp:overwinteringStage +
+                      annualTemp:Seas +
+                      tempSeas:year +
+                      (1|unique_name__) + (1|id_cells),
+                    data = mdf_phylo, 
+                    cov_ranef = list(unique_name = tt), 
+                    bayes = TRUE)
 
 summary(pglmm_peak)
-rr2::R2(pglmm_peak) #0.753
+rr2::R2(pglmm_peak) #0.74959
 im <- pglmm_peak$inla.model
 im_fix <- im$summary.fixed %>% 
   tibble::rownames_to_column("Effects") %>% 
   dplyr::select(Effects, mean, `0.025quant`, `0.975quant`)
-tab_df(im_fix, title = "PGLMM Middle", file = "tables/middle_PGLMM.doc")
+tab_df(im_fix, title = "PGLMM Middle", file = "tables/middle_PGLMM_revision.doc")
 
 
 ## Model Assumption Checks
@@ -311,4 +322,4 @@ peak_correlogram_plot <- ggplot() +
 peak_correlogram_plot # no autocorrelation found at closest spatial lag, so spatial model not made
 
 # save plot as Rdata to make multipanel Moran's I plot for SI
-save(peak_correlogram_plot, file = "figures/peak_correlogram_plot.Rdata")
+save(peak_correlogram_plot, file = "figures/peak_correlogram_plot_revision.Rdata")

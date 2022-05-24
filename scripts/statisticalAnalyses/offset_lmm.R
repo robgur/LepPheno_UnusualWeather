@@ -6,7 +6,7 @@ library(sjPlot)
 library(MuMIn)
 
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
 
 mdf <- mdf %>% 
@@ -30,73 +30,11 @@ mdf <- mdf %>%
 
 ### Offset modeling
 off_m <- lmer(q95 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
-                 dstdoy + ndstcol + 
-                 voltinism + overwinteringStage + diurnality + Seas +
-                 annualTemp:voltinism +
-                 annualTemp:overwinteringStage +
-                 annualTemp:diurnality+
-                 annualTemp:Seas +
-                 year:voltinism +
-                 year:overwinteringStage +
-                 year:diurnality +
-                 annualTemp:annualPrec + 
-                 annualTemp:year + 
-                 tempSeas:year +
-                 annualPrec:year +
-                 precSeas:year +
-                 (1|validName) + (1|id_cells),
-               data = mdf,
-               REML = FALSE, 
-               lmerControl(optimizer = "bobyqa"),
-               weights = off_w)
-
-off_s <- step(off_m)
-off_s
-
-off_top_w <- lmer(q95 ~ annualTemp + tempSeas + precSeas + year +
-                  dstdoy + 
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  annualTemp:Seas +
-                  year:overwinteringStage +
-                  annualTemp:year + 
-                  tempSeas:year +
-                  (1|validName) + (1|id_cells),
-                data = mdf,
-                REML = FALSE, 
-                lmerControl(optimizer = "bobyqa"),
-                weights = off_w)
-
-car::vif(off_top_w) # remove year
-
-off_top_w <- lmer(q95 ~ annualTemp + tempSeas + precSeas + 
-                    dstdoy + 
-                    voltinism + overwinteringStage + diurnality + Seas +
-                    annualTemp:voltinism +
-                    annualTemp:overwinteringStage +
-                    annualTemp:Seas +
-                    year:overwinteringStage +
-                    annualTemp:year + 
-                    tempSeas:year +
-                    (1|validName) + (1|id_cells),
-                  data = mdf,
-                  REML = FALSE, 
-                  lmerControl(optimizer = "bobyqa"),
-                  weights = off_w)
-
-car::vif(off_top_w) 
-# is top model stable?
-off_top_w_s <- step(off_top_w)
-off_top_w_s # yes
-
-### now no weights
-off_m_noW <- lmer(q95 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
                 dstdoy + ndstcol + 
                 voltinism + overwinteringStage + diurnality + Seas +
                 annualTemp:voltinism +
                 annualTemp:overwinteringStage +
-                annualTemp:diurnality +
+                annualTemp:diurnality+
                 annualTemp:Seas +
                 year:voltinism +
                 year:overwinteringStage +
@@ -109,21 +47,84 @@ off_m_noW <- lmer(q95 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
                 (1|validName) + (1|id_cells),
               data = mdf,
               REML = FALSE, 
-              lmerControl(optimizer = "bobyqa"))
+              lmerControl(optimizer = "bobyqa"),
+              weights = off_w)
+
+off_s <- step(off_m)
+off_s
+
+off_top_w <- lmer(q95 ~ annualTemp + tempSeas + precSeas + year +
+                    dstdoy + 
+                    voltinism + overwinteringStage + diurnality + Seas +
+                    annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
+                    annualTemp:Seas +
+                    year:overwinteringStage +
+                    annualTemp:year + 
+                    tempSeas:year +
+                    precSeas:year +
+                    (1|validName) + (1|id_cells),
+                  data = mdf,
+                  REML = FALSE, 
+                  lmerControl(optimizer = "bobyqa"),
+                  weights = off_w)
+
+car::vif(off_top_w) # remove year
+
+off_top_w <- lmer(q95 ~ annualTemp + tempSeas + precSeas +
+                    dstdoy + 
+                    voltinism + overwinteringStage + diurnality + Seas +
+                    annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
+                    annualTemp:Seas +
+                    year:overwinteringStage +
+                    annualTemp:year + 
+                    tempSeas:year +
+                    precSeas:year +
+                    (1|validName) + (1|id_cells),
+                  data = mdf,
+                  REML = FALSE, 
+                  lmerControl(optimizer = "bobyqa"),
+                  weights = off_w)
+car::vif(off_top_w) 
+# is top model stable?
+off_top_w_s <- step(off_top_w)
+off_top_w_s # yes
+
+### now no weights
+off_m_noW <- lmer(q95 ~ annualTemp + tempSeas + annualPrec + precSeas + year +
+                    dstdoy + ndstcol + 
+                    voltinism + overwinteringStage + diurnality + Seas +
+                    annualTemp:voltinism +
+                    annualTemp:overwinteringStage +
+                    annualTemp:diurnality +
+                    annualTemp:Seas +
+                    year:voltinism +
+                    year:overwinteringStage +
+                    year:diurnality +
+                    annualTemp:annualPrec + 
+                    annualTemp:year + 
+                    tempSeas:year +
+                    annualPrec:year +
+                    precSeas:year +
+                    (1|validName) + (1|id_cells),
+                  data = mdf,
+                  REML = FALSE, 
+                  lmerControl(optimizer = "bobyqa"))
 
 off_s_noW <- step(off_m_noW)
 off_s_noW
 
 off_top_noW <- lmer(q95 ~ annualTemp + annualPrec + 
-                          dstdoy + 
-                          voltinism + overwinteringStage + diurnality + Seas +
-                          annualTemp:voltinism +
-                          annualTemp:overwinteringStage +
-                          annualTemp:Seas + 
-                          (1|validName) + (1|id_cells),
-                          data = mdf,
-                          REML = FALSE, 
-                          lmerControl(optimizer = "bobyqa"))
+                      dstdoy + 
+                      voltinism + overwinteringStage + diurnality + Seas +
+                      annualTemp:voltinism +
+                      annualTemp:overwinteringStage +
+                      annualTemp:Seas + 
+                      (1|validName) + (1|id_cells),
+                    data = mdf,
+                    REML = FALSE, 
+                    lmerControl(optimizer = "bobyqa"))
 
 car::vif(off_top_noW)
 # stable?
@@ -180,15 +181,22 @@ car::vif(off_clim_top)
 off_clim_top_s <- step(off_clim_top)
 off_clim_top_s
 
-AICc(off_clim_top, off_top_noW, off_top_w) ## off top_noW and off_top_w had same model
+AICc(off_clim_top, off_top_noW, off_top_w) ## off off_top_w now is the top model
 Weights(AICc(off_clim_top, off_top_noW, off_top_w)) 
 
-summary(off_top_noW)
-plot_model(off_top_noW, type = "pred", terms = c("annualTemp", "voltinism"))
-plot_model(off_top_noW, type = "pred", terms = c("annualTemp", "overwinteringStage"))
-plot_model(off_top_noW, type = "pred", terms = c("annualTemp", "Seas"))
+summary(off_top_w)
+plot_model(off_top_w, type = "pred", terms = c("annualTemp", "voltinism"))
+plot_model(off_top_w, type = "pred", terms = c("annualTemp", "overwinteringStage"))
+plot_model(off_top_w, type = "pred", terms = c("annualTemp", "Seas"))
+plot_model(off_top_w, type = "pred", terms = c("year", "annualTemp"))
+plot_model(off_top_w, type = "pred", terms = c("year", "overwinteringStage"))
+plot_model(off_top_w, type = "pred", terms = c("year", "precSeas"))
 
-tab_model(off_top_noW, file = "tables/offset_LMM.doc")
+
+
+
+
+tab_model(off_top_w, file = "tables/offset_LMM_revisions.doc")
 
 # phylogenetic model time
 library(phyr)
@@ -214,24 +222,35 @@ mdf_phylo <- mdf_phylo %>%
   filter(validName != "Polites sonora") %>% 
   filter(validName != "Nadata gibossa")
 
-pglmm_offset <- pglmm(formula = q95 ~ annualTemp + annualPrec + 
+# drop species from phylogeny that aren't in analysis
+tree_sp <- tt$tip.label
+sppNotInAnalysis <- data.frame(Species = tree_sp) %>% 
+  filter(!Species %in% mdf_phylo$unique_name)
+
+tt <- ape::drop.tip(tt, tip = sppNotInAnalysis$Species)
+
+pglmm_offset <- pglmm(formula = q95 ~ annualTemp + tempSeas + precSeas +
                         dstdoy + 
                         voltinism + overwinteringStage + diurnality + Seas +
                         annualTemp:voltinism +
                         annualTemp:overwinteringStage +
-                        annualTemp:Seas + 
+                        annualTemp:Seas +
+                        year:overwinteringStage +
+                        annualTemp:year + 
+                        tempSeas:year +
+                        precSeas:year +
                         (1|unique_name__) + (1|id_cells),
-                    data = mdf_phylo, 
-                    cov_ranef = list(unique_name = tt), 
-                    bayes = TRUE)
+                      data = mdf_phylo, 
+                      cov_ranef = list(unique_name = tt), 
+                      bayes = TRUE)
 
 summary(pglmm_offset)
-rr2::R2(pglmm_offset) #0.753
+rr2::R2(pglmm_offset) #0.795
 im <- pglmm_offset$inla.model
 im_fix <- im$summary.fixed %>% 
   tibble::rownames_to_column("Effects") %>% 
   dplyr::select(Effects, mean, `0.025quant`, `0.975quant`)
-tab_df(im_fix, title = "PGLMM Offset", file = "tables/offset_PGLMM.doc")
+tab_df(im_fix, title = "PGLMM Offset", file = "tables/offset_PGLMM_revision.doc")
 
 ## Model Assumption Checks
 # residuals
@@ -254,7 +273,7 @@ v1 <- variog(gdf, trend = "1st")
 plot(v1)
 
 ## Goodness of fit
-rr2::R2(pglmm_offset) #0.746
+rr2::R2(pglmm_offset) #0.795
 
 ## Examine spatial autocorrelation a second way
 library(ncf)
@@ -286,4 +305,4 @@ offset_correlogram_plot <- ggplot() +
 offset_correlogram_plot # no autocorrelation found at closest spatial lag, so spatial model not made
 
 # save plot as Rdata to make multipanel Moran's I plot for SI
-save(offset_correlogram_plot, file = "figures/offset_correlogram_plot.Rdata")
+save(offset_correlogram_plot, file = "figures/offset_correlogram_plot_revision.Rdata")
