@@ -1,10 +1,15 @@
-library(tidyverse)
 library(phyr)
 library(gridExtra)
 library(INLA)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(car)
+library(sjPlot)
+library(MuMIn)
 
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
 
 mdf <- mdf %>% 
@@ -49,9 +54,16 @@ mdf_phylo <- mdf_phylo %>%
   filter(validName != "Polites sonora") %>% 
   filter(validName != "Nadata gibossa")
 
+# drop species from phylogeny that aren't in analysis
+tree_sp <- tt$tip.label
+sppNotInAnalysis <- data.frame(Species = tree_sp) %>% 
+  filter(!Species %in% mdf_phylo$unique_name)
+
+tt <- ape::drop.tip(tt, tip = sppNotInAnalysis$Species)
+
 ## interaction between voltinism and annual temp
 inla_mdf <- mdf_phylo %>% 
-  dplyr::select(dur, q95, q5, annualTemp, annualPrec, precSeas,
+  dplyr::select(dur, q95, q5, annualTemp, tempSeas, annualPrec, precSeas,
                 dstdoy, voltinism, overwinteringStage,
                 diurnality, Seas, unique_name, id_cells, year)
 
@@ -62,6 +74,7 @@ term1 <- data.frame(
   q95 = rep(NA, length(pred_vals)),
   q5 = rep(NA, length(pred_vals)),
   annualTemp = rep(NA, length(pred_vals)),
+  tempSeas = rep(NA, length(pred_vals)),
   annualPrec = rep(NA, length(pred_vals)),
   precSeas = rep(NA, length(pred_vals)),
   dstdoy = pred_vals,
@@ -75,45 +88,47 @@ term1 <- data.frame(
 
 pred.df.1 <- rbind(inla_mdf, term1)
 
-pglmm1 <- pglmm(formula = dur ~ annualTemp + annualPrec +
-                  dstdoy +
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  annualTemp:Seas +
-                  Seas:year +
-                  annualTemp:annualPrec +
-                  (1|unique_name__) + (1|id_cells),
-                data = pred.df.1, 
-                cov_ranef = list(unique_name = tt), 
-                bayes = TRUE)
-
-
-## now termination
-pglmm2 <- pglmm(formula = q95 ~ annualTemp + annualPrec + 
-                  dstdoy + 
-                  voltinism + overwinteringStage + diurnality + Seas +
-                  annualTemp:voltinism +
-                  annualTemp:overwinteringStage +
-                  annualTemp:Seas + 
-                  (1|unique_name__) + (1|id_cells),
-                data = pred.df.1, 
-                cov_ranef = list(unique_name = tt), 
-                bayes = TRUE)
-
-
-## now onset
-pglmm3 <-  pglmm(formula = q5 ~ annualTemp + annualPrec + precSeas +
+pglmm1 <-  pglmm(formula = dur ~ annualTemp + annualPrec + precSeas +
                    dstdoy +
-                   overwinteringStage + 
-                   annualTemp:overwinteringStage +
-                   year:overwinteringStage +
-                   annualTemp:annualPrec + 
-                   annualPrec:year +
+                   voltinism + overwinteringStage + diurnality + Seas +
+                   annualTemp:voltinism +
+                   annualTemp:Seas + 
+                   annualTemp:annualPrec +
                    (1|unique_name__) + (1|id_cells),
                  data = pred.df.1, 
                  cov_ranef = list(unique_name = tt), 
                  bayes = TRUE)
+
+
+## now termination
+pglmm2 <-pglmm(formula = q95 ~ annualTemp + tempSeas + precSeas +
+                 dstdoy + 
+                 voltinism + overwinteringStage + diurnality + Seas +
+                 annualTemp:voltinism +
+                 annualTemp:overwinteringStage +
+                 annualTemp:Seas +
+                 year:overwinteringStage +
+                 annualTemp:year + 
+                 tempSeas:year +
+                 precSeas:year +
+                 (1|unique_name__) + (1|id_cells),
+               data = pred.df.1, 
+               cov_ranef = list(unique_name = tt), 
+               bayes = TRUE)
+
+
+## now onset
+pglmm3 <-   pglmm(formula = q5 ~ annualTemp + annualPrec + precSeas +
+                    dstdoy +
+                    overwinteringStage + 
+                    annualTemp:overwinteringStage +
+                    year:overwinteringStage +
+                    annualTemp:annualPrec + 
+                    annualPrec:year +
+                    (1|unique_name__) + (1|id_cells),
+                  data = pred.df.1, 
+                  cov_ranef = list(unique_name = tt), 
+                  bayes = TRUE)
 
 ## make df of results
 rdf1 <- pglmm1$inla.model$summary.linear.predictor[(nrow(mdf_phylo)+1):nrow(pred.df.1),] %>% 
@@ -153,9 +168,10 @@ onset <- ggplot(rdf3, mapping = aes(x = V1, y = mean)) +
 onset
 
 cp <- egg::ggarrange(onset, termination, duration, labels = c("A","B", "C"),
-                         ncol = 1)
+                     ncol = 1)
 
 cp
 
-ggsave(cp, file = "figures/dstdaysCoef.png", dpi = 600,
-     width = 3, height = 6)
+ggsave(cp, file = "figures/dstdaysCoef_revision.png", dpi = 600,
+       width = 3, height = 6)
+
