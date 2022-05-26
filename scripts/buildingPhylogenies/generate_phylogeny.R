@@ -8,7 +8,7 @@ library(stringr)
 
 ## make phylogeny
 ## read in data
-mdf <- read.csv("data/LMM_Data/mdf_pruned_hopkins.csv") %>% 
+mdf <- read.csv("data/LMM_Data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv") %>% 
   dplyr::filter(overwinteringStage != "None")
 
 spp_list <- mdf %>% 
@@ -16,6 +16,7 @@ spp_list <- mdf %>%
   dplyr::distinct(validName, .keep_all = T) %>% 
   dplyr::mutate(phyloName = validName)
 
+# deal with taxonomy issues
 spp_list <- spp_list %>% 
   mutate(phyloName = if_else(phyloName == "Fabricius dorcas",
                              true = "Lycaena dorcas",
@@ -152,10 +153,6 @@ t <- read.tree("data/phylogeny/insect_tree.tre")
 insect_tree2 = phylocomr::ph_bladj(ages = ages, phylo = t)
 
 
-
-
-
-
 # save phylogeny related data
 write.tree(itree_otl$phy, file = "data/phylogeny/insect_tree.tre") #tree
 write.csv(nmz2, file = 'data/phylogeny/phy_spp_names.csv', row.names = F) # names in phylogeny
@@ -163,3 +160,19 @@ write.csv(nmz2, file = 'data/phylogeny/phy_spp_names.csv', row.names = F) # name
 # add branch lengths
 itree_otl$phy$edge <- est_age
 plot(itree_otl$phy)
+
+
+ages <- read.csv("data/phylogeny/phy_ages.csv", header = F) %>% 
+  mutate(V1 = str_replace(V1, pattern = " ", replacement = "_"))
+t <- read.tree("data/phylogeny/insect_tree.tre")
+
+insect_tree2 = phylocomr::ph_bladj(ages = ages, phylo = t)
+plot(ape::read.tree(text = insect_tree2))
+
+insect_tree3 = ape::read.tree(text = insect_tree2)
+
+plot(insect_tree3, type = "fan")
+
+insect_tree3
+
+write.tree(insect_tree3, file = "data/phylogeny/insect_tree_wBranches.tre")

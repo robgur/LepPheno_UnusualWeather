@@ -303,6 +303,7 @@ pglmm_onset <- pglmm(formula = q5 ~ annualTemp + annualPrec + precSeas +
                      bayes = TRUE)
 
 summary(pglmm_onset)
+rr2::R2(pglmm_onset) #0.794
 
 im <- pglmm_onset$inla.model
 im_fix <- im$summary.fixed %>% 

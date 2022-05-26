@@ -18,20 +18,16 @@ notAdults <- c("Nymph", "Immature", "Pupa", "Larva", "Egg",
 leps <- leps %>% 
   filter(!lifeStage %in% notAdults)
 
-ggplot(leps, mapping = aes(x = doy)) +
-  geom_histogram(bins = 365) +
-  scale_y_continuous(expand = c(0,0)) +
-  theme_bw()
-
 # lines were used to visualize what the data looked like for first of years
 #doy1 <- filter(leps, doy == 1)
 #doy32 <- filter(leps, doy == 32) 
 
 spp_list <- read.csv("data/traits/spp_list_traits_mike_withValidNames.csv")
-spp_list <- spp_list$scientific_name
 
 names_df <- spp_list %>% 
   dplyr::select(scientific_name, Syn, validName)
+
+spp_list <- spp_list$scientific_name
 
 ## filter lep obs to spp_list
 leps <- leps %>% 
@@ -39,11 +35,6 @@ leps <- leps %>%
   mutate(gcode = paste(binomial, year, id_cells, sep = ".")) %>% 
   filter(!is.na(doy)) %>% 
   filter(day > 1) 
-
-ggplot(leps, mapping = aes(x = doy)) +
-  geom_histogram(bins = 365) +
-  scale_y_continuous(expand = c(0,0)) +
-  theme_bw()
 
 # join to names by scientific_name
 leps_nameJoin <- left_join(leps, names_df, 
@@ -99,8 +90,8 @@ leps_effort <- left_join(leps_validNames, enough_data) %>%
          !is.na(id_cells),
          !is.na(binomial))
 
-## move to bear
-write.csv(leps_effort, file = "outputs/occurrence_records_forPhenometrics.csv", row.names = F)
+## move to bear (lab cluster)
+#write.csv(leps_effort, file = "outputs/occurrence_records_forPhenometrics.csv", row.names = F)
 
 ## split into list of dataframes per species
 data_list <- split(leps_effort, 
