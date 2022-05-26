@@ -2,21 +2,21 @@ library(tidyverse)
 library(data.table)
 
 # read in scan data
-scan1 <- fread("data/SCAN1/occurrences.csv", 
+scan1 <- fread("data/SCAN/SCAN1/occurrences.csv", 
                select = c("id", "institutionCode", "collectionCode", "basisOfRecord", 
                           "occurrenceID", "order", "family", "genus", "specificEpithet",
                           "scientificName", "identifiedBy", "eventDate", "year", "month", 
                           "day", "verbatimEventDate",
                           "recordedBy", "lifeStage", "decimalLongitude", "decimalLatitude", 
                           "locality", "county", "coordinateUncertaintyInMeters"))
-scan2 <- fread("data/SCAN2/occurrences.csv",
+scan2 <- fread("data/SCAN/SCAN2/occurrences.csv",
                select = c("id", "institutionCode", "collectionCode", "basisOfRecord", 
                           "occurrenceID","order", "family", "genus", "specificEpithet",
                           "scientificName", "identifiedBy", "eventDate", "year", "month",
                           "day",  "verbatimEventDate",
                           "recordedBy", "lifeStage", "decimalLongitude", "decimalLatitude", 
                           "locality", "county", "coordinateUncertaintyInMeters"))
-scan3 <- fread("data/SCAN3/occurrences.csv",
+scan3 <- fread("data/SCAN/SCAN3/occurrences.csv",
                select = c("id", "institutionCode", "collectionCode", "basisOfRecord", 
                           "occurrenceID","order", "family", "genus", "specificEpithet",
                           "scientificName", "identifiedBy", "eventDate", "year", "month",
@@ -45,7 +45,7 @@ gbif <- gbif %>%
   rename(id = gbifID)
 
 # read in iDigBio data
-idig <- fread("data/iDigBio/occurrence_raw.csv",
+idig <- fread("data/iDigBio/iDigBio/occurrence_raw.csv",
               select = c("coreid", "dwc:institutionCode", "dwc:collectionCode", "dwc:basisOfRecord", 
                          "dwc:occurrenceID", "dwc:order", "dwc:family", "dwc:genus", "dwc:specificEpithet",
                          "dwc:scientificName", "dwc:identifiedBy", "dwc:eventDate", "dwc:year", "dwc:month",
@@ -127,7 +127,7 @@ ggplot(spp_sum, mapping = aes(x = source, y = count)) +
 cp <- cowplot::plot_grid(a,b, labels = c("A", "B"))
 cp
 
-## read in data
+## read in data 
 leps <- fread("data/munged/LepsByGrid.csv") %>% 
   mutate(binomial = paste(genus, specificEpithet, sep = " "))
 
