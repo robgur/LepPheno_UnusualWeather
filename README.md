@@ -1,8 +1,8 @@
-# LepPheno_BestPractices
+# LepPheno_UnusualWeater forked from LepPheno_BestPractices
 
-Scripts and data associated with manuscript titled "Phenological research based on natural history collections: practical guidelines and a Lepidopteran case study". 
+The phenometrics used in this paper were derived from the work of Belitz et al. "Phenological research based on natural history collections: practical guidelines and a Lepidopteran case study".  We have kept the scripts and code from this effort and added in new analyses focused on the importance of extreme/anomalous weather.  This forms the basis for a new manuscript entitled "Extreme Warm and Cold Act Synergistically to Extend Flight Duration in Lepidopterans"
 
-If you download or clone this repository, you can fully replicate LMM and PLMM results and figures. The entire workflow can also be reproduced if you download and unzip the raw occurrence records from our OSF project (https://osf.io/wdzay/). These zip files should be unzipped into the /data subdirectory for scripts to run properly. 
+If you download or clone this repository, you can fully replicate Belitz et al. and Guralnick et al. The entire workflow can also be reproduced if you download and unzip the raw occurrence records from our OSF project (https://osf.io/wdzay/). These zip files should be unzipped into the /data subdirectory for scripts to run properly. 
 
 ## Overview of repository
 
