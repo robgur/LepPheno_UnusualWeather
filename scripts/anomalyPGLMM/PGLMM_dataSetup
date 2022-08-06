@@ -1,0 +1,41 @@
+library(dplyr)
+library(ape)
+
+# read in analysis dataframe
+mdf <- read.csv("data/flowering_4816_DT_15N3.csv")
+
+bestPractices_mdf <- read.csv('data/mdf_removeOutliersResiduals_wSeasonalityTrait.csv') %>% 
+  select(lon, lat, id_cells) %>% 
+  distinct(.keep_all = T)
+
+# join together to get the lat and lon for id_cells
+mdf <- left_join(mdf, bestPractices_mdf, by = ("id_cells"))
+
+# function to capitalize spp names
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}
+
+# read in phylogeny
+tt <- read.tree("data/insect_tree_wBranches.tre")
+tt$tip.label <- stringr::str_replace(tt$tip.label, pattern = "_", " ")
+tt$tip.label <- firstup(tt$tip.label)
+phylo_list <- read.csv('data/phy_spp_names.csv')
+
+phylo_list <- phylo_list %>% 
+  mutate(search_string2 = firstup(phylo_list$search_string)) %>% 
+  dplyr::select(search_string, unique_name, ott_id, search_string2)
+
+mdf_phylo <- left_join(mdf, phylo_list, by = c("validName" = "search_string2"))
+
+mdf_phylo <- mdf_phylo %>% 
+  filter(validName != "Polites sonora") %>% 
+  filter(validName != "Nadata gibossa")
+
+# drop species from phylogeny that aren't in analysis
+tree_sp <- tt$tip.label
+sppNotInAnalysis <- data.frame(Species = tree_sp) %>% 
+  filter(!Species %in% mdf_phylo$unique_name)
+
+tt <- ape::drop.tip(tt, tip = sppNotInAnalysis$Species)
