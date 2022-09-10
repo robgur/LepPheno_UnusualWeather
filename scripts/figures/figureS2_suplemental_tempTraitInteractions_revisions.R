@@ -133,4 +133,4 @@ ep
 
 ggsave(ep, 
        filename = "figures/Supplemental_TempXTraits.png",
-       width = 15,  height = 8)
+       width = 19,  height = 8)

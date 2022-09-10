@@ -74,4 +74,4 @@ ep <- egg::ggarrange( p3, p4, p1, p2,
 
 
 ggsave(plot = ep, filename = "figures/Fig5_interactions.png",
-       dpi = 600, width = 10, height = 6)
+       dpi = 600, width = 11, height = 7)
